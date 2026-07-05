@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Notes</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    display: flex;
+    height: 100vh;
+    background: #ffffff;
+    color: #1a1a1a;
+  }
+
+  /* Sidebar */
+  #sidebar {
+    width: 260px;
+    background: #f7f6f3;
+    border-right: 1px solid #e5e3de;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  #sidebar-header {
+    padding: 18px 16px 10px;
+    font-weight: 600;
+    font-size: 15px;
+    color: #37352f;
+  }
+  #new-note-btn {
+    margin: 0 12px 10px;
+    padding: 8px 12px;
+    background: #ffffff;
+    border: 1px solid #e5e3de;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #37352f;
+    text-align: left;
+  }
+  #new-note-btn:hover { background: #edecea; }
+
+  #note-list {
+    overflow-y: auto;
+    flex: 1;
+    padding: 0 8px;
+  }
+  .note-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #4a4a45;
+    margin-bottom: 2px;
+  }
+  .note-item:hover { background: #edecea; }
+  .note-item.active { background: #e5e3de; color: #1a1a1a; font-weight: 500; }
+  .note-title-preview {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+  }
+  .delete-btn {
+    opacity: 0;
+    color: #a19f9a;
+    font-size: 13px;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .note-item:hover .delete-btn { opacity: 1; }
+  .delete-btn:hover { background: #ddd; color: #c0392b; }
+
+  #empty-state {
+    padding: 20px;
+    color: #a19f9a;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  /* Main content */
+  #main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #editor-area {
+    flex: 1;
+    padding: 60px 80px;
+    overflow-y: auto;
+  }
+  #note-title {
+    width: 100%;
+    border: none;
+    outline: none;
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #1a1a1a;
+    font-family: inherit;
+  }
+  #note-title::placeholder { color: #d3d1cb; }
+
+  #note-body {
+    width: 100%;
+    min-height: 60vh;
+    border: none;
+    outline: none;
+    resize: none;
+    font-size: 16px;
+    line-height: 1.7;
+    color: #37352f;
+    font-family: inherit;
+  }
+  #note-body::placeholder { color: #d3d1cb; }
+
+  /* Toolbar */
+  #toolbar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 0 16px;
+    border-bottom: 1px solid #edecea;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .tb-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid transparent;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px;
+    color: #37352f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .tb-btn:hover { background: #edecea; }
+  .tb-btn.active { background: #e5e3de; border-color: #d3d1cb; }
+  .tb-sep {
+    width: 1px;
+    height: 22px;
+    background: #e5e3de;
+    margin: 0 6px;
+  }
+  #font-select, #size-select {
+    height: 32px;
+    border: 1px solid #e5e3de;
+    border-radius: 6px;
+    background: #ffffff;
+    font-size: 13px;
+    color: #37352f;
+    padding: 0 6px;
+    cursor: pointer;
+  }
+
+  #note-body[contenteditable="true"] {
+    outline: none;
+  }
+  #note-body[contenteditable="true"]:empty:before {
+    content: attr(data-placeholder);
+    color: #d3d1cb;
+  }
+
+  #no-note-selected {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a19f9a;
+    font-size: 15px;
+  }
+
+  #save-indicator {
+    position: fixed;
+    bottom: 16px;
+    right: 20px;
+    font-size: 12px;
+    color: #a19f9a;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  #save-indicator.visible { opacity: 1; }
+
+  @media (max-width: 700px) {
+    #sidebar { width: 200px; }
+    #editor-area { padding: 30px 24px; }
+    #note-title { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div id="sidebar-header">📝 My Notes</div>
+  <button id="new-note-btn">+ New note</button>
+  <div id="note-list"></div>
+</div>
+
+<div id="main">
+  <div id="no-note-selected">Select a note, or create a new one to get started.</div>
+  <div id="editor-area" style="display:none;">
+    <input id="note-title" type="text" placeholder="Untitled" />
+
+    <div id="toolbar">
+      <button class="tb-btn" id="btn-bold" title="Bold"><b>B</b></button>
+      <button class="tb-btn" id="btn-italic" title="Italic"><i>I</i></button>
+      <button class="tb-btn" id="btn-underline" title="Underline"><u>U</u></button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn" id="btn-bullet" title="Bullet list">•≡</button>
+      <button class="tb-btn" id="btn-number" title="Numbered list">1.≡</button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn" id="btn-clear" title="Clear formatting">Tx</button>
+      <div class="tb-sep"></div>
+      <select id="font-select" title="Font">
+        <option value="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">Default</option>
+        <option value="Georgia, 'Times New Roman', serif">Serif</option>
+        <option value="'Courier New', monospace">Monospace</option>
+        <option value="'Comic Sans MS', cursive">Casual</option>
+      </select>
+      <select id="size-select" title="Font size">
+        <option value="14px">Small</option>
+        <option value="16px" selected>Normal</option>
+        <option value="20px">Large</option>
+        <option value="26px">Huge</option>
+      </select>
+    </div>
+
+    <div id="note-body" contenteditable="true" data-placeholder="Start writing..."></div>
+  </div>
+</div>
+
+<div id="save-indicator">Saved</div>
+
+<script>
+  const STORAGE_KEY = "my_notes_app_data";
+  let notes = [];
+  let activeId = null;
+
+  function loadNotes() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    notes = raw ? JSON.parse(raw) : [];
+  }
+
+  function saveNotes() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+    showSaveIndicator();
+  }
+
+  function showSaveIndicator() {
+    const el = document.getElementById("save-indicator");
+    el.classList.add("visible");
+    clearTimeout(window._saveTimeout);
+    window._saveTimeout = setTimeout(() => el.classList.remove("visible"), 1200);
+  }
+
+  function createNote() {
+    const note = {
+      id: Date.now().toString(),
+      title: "",
+      body: "",
+      updatedAt: Date.now(),
+    };
+    notes.unshift(note);
+    saveNotes();
+    renderNoteList();
+    selectNote(note.id);
+  }
+
+  function deleteNote(id, event) {
+    event.stopPropagation();
+    if (!confirm("Delete this note?")) return;
+    notes = notes.filter(n => n.id !== id);
+    saveNotes();
+    if (activeId === id) {
+      activeId = null;
+      document.getElementById("editor-area").style.display = "none";
+      document.getElementById("no-note-selected").style.display = "flex";
+    }
+    renderNoteList();
+  }
+
+  function selectNote(id) {
+    activeId = id;
+    const note = notes.find(n => n.id === id);
+    if (!note) return;
+    document.getElementById("no-note-selected").style.display = "none";
+    document.getElementById("editor-area").style.display = "block";
+    document.getElementById("note-title").value = note.title;
+    document.getElementById("note-body").innerHTML = note.body || "";
+    document.getElementById("note-body").style.fontFamily = note.fontFamily || "";
+    document.getElementById("note-body").style.fontSize = note.fontSize || "16px";
+    document.getElementById("font-select").value = note.fontFamily || document.getElementById("font-select").options[0].value;
+    document.getElementById("size-select").value = note.fontSize || "16px";
+    renderNoteList();
+  }
+
+  function updateActiveNote() {
+    if (!activeId) return;
+    const note = notes.find(n => n.id === activeId);
+    if (!note) return;
+    note.title = document.getElementById("note-title").value;
+    note.body = document.getElementById("note-body").innerHTML;
+    note.fontFamily = document.getElementById("note-body").style.fontFamily;
+    note.fontSize = document.getElementById("note-body").style.fontSize;
+    note.updatedAt = Date.now();
+    saveNotes();
+    renderNoteList();
+  }
+
+  function applyFormat(command) {
+    document.execCommand(command, false, null);
+    document.getElementById("note-body").focus();
+    updateActiveNote();
+  }
+
+  function renderNoteList() {
+    const list = document.getElementById("note-list");
+    list.innerHTML = "";
+
+    if (notes.length === 0) {
+      list.innerHTML = '<div id="empty-state">No notes yet</div>';
+      return;
+    }
+
+    const sorted = [...notes].sort((a, b) => b.updatedAt - a.updatedAt);
+
+    for (const note of sorted) {
+      const item = document.createElement("div");
+      item.className = "note-item" + (note.id === activeId ? " active" : "");
+      item.onclick = () => selectNote(note.id);
+
+      const preview = document.createElement("span");
+      preview.className = "note-title-preview";
+      preview.textContent = note.title || "Untitled";
+
+      const del = document.createElement("span");
+      del.className = "delete-btn";
+      del.textContent = "✕";
+      del.onclick = (e) => deleteNote(note.id, e);
+
+      item.appendChild(preview);
+      item.appendChild(del);
+      list.appendChild(item);
+    }
+  }
+
+  document.getElementById("new-note-btn").addEventListener("click", createNote);
+  document.getElementById("note-title").addEventListener("input", updateActiveNote);
+  document.getElementById("note-body").addEventListener("input", updateActiveNote);
+
+  document.getElementById("btn-bold").addEventListener("click", () => applyFormat("bold"));
+  document.getElementById("btn-italic").addEventListener("click", () => applyFormat("italic"));
+  document.getElementById("btn-underline").addEventListener("click", () => applyFormat("underline"));
+  document.getElementById("btn-bullet").addEventListener("click", () => applyFormat("insertUnorderedList"));
+  document.getElementById("btn-number").addEventListener("click", () => applyFormat("insertOrderedList"));
+  document.getElementById("btn-clear").addEventListener("click", () => applyFormat("removeFormat"));
+
+  document.getElementById("font-select").addEventListener("change", (e) => {
+    document.getElementById("note-body").style.fontFamily = e.target.value;
+    updateActiveNote();
+  });
+  document.getElementById("size-select").addEventListener("change", (e) => {
+    document.getElementById("note-body").style.fontSize = e.target.value;
+    updateActiveNote();
+  });
+
+  loadNotes();
+  renderNoteList();
+</script>
+
+</body>
+</html>
