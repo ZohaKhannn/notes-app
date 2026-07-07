@@ -5,210 +5,383 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>My Notes</title>
 <style>
+  :root {
+    --accent: #2f7d5e;
+    --accent-light: #e6f2ec;
+    --bg: #ffffff;
+    --sidebar-bg: #f7f6f3;
+    --border: #e5e3de;
+    --text: #1a1a1a;
+    --text-light: #4a4a45;
+    --text-faint: #a19f9a;
+  }
+  html.dark {
+    --bg: #1e1e1e;
+    --sidebar-bg: #181818;
+    --border: #333333;
+    --text: #f2f2f2;
+    --text-light: #d4d4d4;
+    --text-faint: #888888;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overscroll-behavior: none; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     display: flex;
     height: 100vh;
-    background: #ffffff;
-    color: #1a1a1a;
+    height: 100dvh;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
   }
 
-  /* Sidebar */
   #sidebar {
-    width: 260px;
-    background: #f7f6f3;
-    border-right: 1px solid #e5e3de;
+    width: 280px;
+    background-color: var(--sidebar-bg);
+    background-image: radial-gradient(var(--border) 1px, transparent 1px);
+    background-size: 18px 18px;
+    border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    height: 100%;
   }
   #sidebar-header {
-    padding: 18px 16px 10px;
+    padding: 16px 16px 8px;
     font-weight: 600;
     font-size: 15px;
-    color: #37352f;
-  }
-  #new-note-btn {
-    margin: 0 12px 10px;
-    padding: 8px 12px;
-    background: #ffffff;
-    border: 1px solid #e5e3de;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-    color: #37352f;
-    text-align: left;
-  }
-  #new-note-btn:hover { background: #edecea; }
-
-  #note-list {
-    overflow-y: auto;
-    flex: 1;
-    padding: 0 8px;
-  }
-  .note-item {
+    color: var(--text-light);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 7px 10px;
-    border-radius: 5px;
+    gap: 6px;
+  }
+  #sidebar-header-icons { display: flex; gap: 6px; }
+  .icon-btn {
+    width: 28px; height: 28px; border: 1px solid var(--border); background: var(--bg);
+    border-radius: 50%; cursor: pointer; font-size: 13px; display: flex;
+    align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .icon-btn:hover { background: var(--accent-light); }
+
+  #search-wrap { padding: 0 12px 8px; }
+  #search-input {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 13px; background: var(--bg); color: var(--text); outline: none;
+  }
+  #search-input:focus { border-color: var(--accent); }
+
+  #new-note-btn {
+    margin: 0 12px 10px;
+    padding: 8px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
-    color: #4a4a45;
-    margin-bottom: 2px;
-  }
-  .note-item:hover { background: #edecea; }
-  .note-item.active { background: #e5e3de; color: #1a1a1a; font-weight: 500; }
-  .note-title-preview {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
-  }
-  .delete-btn {
-    opacity: 0;
-    color: #a19f9a;
     font-size: 13px;
-    padding: 2px 6px;
-    border-radius: 4px;
+    color: var(--text-light);
+    text-align: left;
   }
-  .note-item:hover .delete-btn { opacity: 1; }
-  .delete-btn:hover { background: #ddd; color: #c0392b; }
+  #new-note-btn:hover { background: var(--accent-light); }
 
-  #empty-state {
-    padding: 20px;
-    color: #a19f9a;
-    font-size: 13px;
-    text-align: center;
+  #note-list { overflow-y: auto; flex: 1; padding: 0 8px; -webkit-overflow-scrolling: touch; }
+  .list-section-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-faint);
+    padding: 8px 10px 4px;
   }
-
-  /* Main content */
-  #main {
-    flex: 1;
+  .note-item {
     display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 10px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-light);
+    margin-bottom: 2px;
+    gap: 6px;
   }
+  .note-item:hover { background: var(--accent-light); }
+  .note-item.active { background: var(--accent-light); color: var(--text); }
+  .note-item-main { flex: 1; min-width: 0; }
+  .note-title-preview {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; font-weight: 500;
+  }
+  .note-meta { font-size: 11px; color: var(--text-faint); margin-top: 2px; }
+  .note-item-actions { display: flex; gap: 2px; flex-shrink: 0; }
+  .note-action-btn {
+    opacity: 0; color: var(--text-faint); font-size: 14px; padding: 4px 6px;
+    border-radius: 4px; background: none; border: none; cursor: pointer;
+  }
+  .note-item:hover .note-action-btn { opacity: 1; }
+  .note-action-btn:hover { background: #ddd; }
+  .note-action-btn.pinned { opacity: 1; color: var(--accent); }
+  #empty-state { padding: 30px 20px; color: var(--text-faint); font-size: 13px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  #empty-state svg { width: 40px; height: 40px; opacity: 0.4; }
+
+  #sidebar-footer {
+    border-top: 1px solid var(--border); padding: 8px 16px; font-size: 12px; color: var(--text-faint);
+    cursor: pointer; display: flex; align-items: center; gap: 6px;
+  }
+  #sidebar-footer:hover { color: var(--text-light); }
+
+  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; height: 100%; min-width: 0; }
   #editor-area {
-    flex: 1;
-    padding: 60px 80px;
-    overflow-y: auto;
+    flex: 1; padding: 50px 80px 20px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    background-color: var(--bg);
+    background-image: radial-gradient(var(--border) 1px, transparent 1px);
+    background-size: 24px 24px;
   }
   #note-title {
-    width: 100%;
-    border: none;
-    outline: none;
-    font-size: 32px;
-    font-weight: 700;
-    margin-bottom: 16px;
-    color: #1a1a1a;
-    font-family: inherit;
+    width: 100%; border: none; outline: none; font-size: 32px; font-weight: 700;
+    margin-bottom: 10px; color: var(--text); font-family: inherit; background: transparent;
   }
   #note-title::placeholder { color: #d3d1cb; }
 
+  #tags-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 16px; }
+  .tag-chip {
+    background: var(--accent-light); color: var(--accent); font-size: 12px; padding: 3px 9px;
+    border-radius: 12px; display: flex; align-items: center; gap: 5px;
+  }
+  .tag-chip button { background: none; border: none; cursor: pointer; color: var(--accent); font-size: 12px; line-height: 1; }
+  #tag-input {
+    border: none; outline: none; font-size: 12px; background: transparent; color: var(--text-faint);
+    min-width: 90px; flex: 1;
+  }
+
   #note-body {
-    width: 100%;
-    min-height: 60vh;
-    border: none;
-    outline: none;
-    resize: none;
-    font-size: 16px;
-    line-height: 1.7;
-    color: #37352f;
-    font-family: inherit;
+    width: 100%; min-height: 50vh; border: none; outline: none; resize: none;
+    font-size: 16px; line-height: 1.7; color: var(--text-light); font-family: inherit;
+    -webkit-user-select: text;
   }
-  #note-body::placeholder { color: #d3d1cb; }
+  #note-body img { max-width: 100%; border-radius: 6px; margin: 8px 0; display: block; }
+  #note-body[contenteditable="true"]:empty:before { content: attr(data-placeholder); color: #d3d1cb; }
+  .checklist-item { display: flex; align-items: flex-start; gap: 8px; margin: 4px 0; }
+  .checklist-item input[type="checkbox"] { margin-top: 5px; cursor: pointer; flex-shrink: 0; }
+  .checklist-item.checked span { text-decoration: line-through; opacity: 0.55; }
 
-  /* Toolbar */
-  #toolbar {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 8px 0 16px;
-    border-bottom: 1px solid #edecea;
-    margin-bottom: 18px;
-    flex-wrap: wrap;
+  #note-footer-meta {
+    font-size: 12px; color: var(--text-faint); padding: 20px 80px 20px; border-top: 1px solid var(--border);
   }
+
+  #mobile-editor-header {
+    display: none; align-items: center; gap: 4px; padding: 10px 8px;
+    border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  #back-btn, .mobile-icon-btn {
+    width: 36px; height: 36px; border: none; background: transparent; border-radius: 6px;
+    font-size: 18px; cursor: pointer; color: var(--text-light);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  #back-btn:active, .mobile-icon-btn:active { background: var(--accent-light); }
+  #mobile-editor-header-label { font-size: 13px; color: var(--text-faint); flex: 1; }
+  #mobile-list-header { display: none; align-items: center; justify-content: space-between; padding: 16px 16px 6px; }
+  #mobile-list-header h1 { font-size: 22px; font-weight: 700; color: var(--text); }
+  #mobile-header-buttons { display: flex; gap: 6px; }
+  .round-btn {
+    width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff;
+    font-size: 16px; border: none; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; line-height: 1;
+  }
+
+  #toolbar { display: flex; align-items: center; gap: 2px; padding: 8px 0 14px; border-bottom: 1px solid var(--border); margin-bottom: 14px; flex-wrap: wrap; position: relative; }
   .tb-btn {
-    width: 32px;
-    height: 32px;
-    border: 1px solid transparent;
-    background: transparent;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 15px;
-    color: #37352f;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 34px; height: 34px; border: 1px solid transparent; background: transparent; border-radius: 6px;
+    cursor: pointer; font-size: 14px; color: var(--text-light); display: flex; align-items: center; justify-content: center;
   }
-  .tb-btn:hover { background: #edecea; }
-  .tb-btn.active { background: #e5e3de; border-color: #d3d1cb; }
-  .tb-sep {
-    width: 1px;
-    height: 22px;
-    background: #e5e3de;
-    margin: 0 6px;
-  }
+  .tb-btn:hover { background: var(--accent-light); }
+  .tb-btn.recording { background: #f4d4d4; color: #c0392b; }
+  .tb-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
   #font-select, #size-select {
-    height: 32px;
-    border: 1px solid #e5e3de;
-    border-radius: 6px;
-    background: #ffffff;
-    font-size: 13px;
-    color: #37352f;
-    padding: 0 6px;
-    cursor: pointer;
-  }
-
-  #note-body[contenteditable="true"] {
-    outline: none;
-  }
-  #note-body[contenteditable="true"]:empty:before {
-    content: attr(data-placeholder);
-    color: #d3d1cb;
+    height: 34px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg);
+    font-size: 12px; color: var(--text-light); padding: 0 4px; cursor: pointer;
   }
 
   #no-note-selected {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #a19f9a;
-    font-size: 15px;
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: var(--text-faint); font-size: 15px; text-align: center; padding: 20px; gap: 16px;
+    background-color: var(--bg);
+    background-image: radial-gradient(var(--border) 1px, transparent 1px);
+    background-size: 24px 24px;
   }
+  #no-note-selected svg { width: 88px; height: 88px; opacity: 0.5; }
 
   #save-indicator {
-    position: fixed;
-    bottom: 16px;
-    right: 20px;
-    font-size: 12px;
-    color: #a19f9a;
-    opacity: 0;
-    transition: opacity 0.3s;
+    position: fixed; bottom: 16px; right: 20px; font-size: 12px; color: var(--text-faint);
+    opacity: 0; transition: opacity 0.3s; z-index: 10;
   }
   #save-indicator.visible { opacity: 1; }
 
+  #emoji-picker {
+    display: none; position: absolute; bottom: 40px; left: 0; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    padding: 10px; width: 260px; max-height: 220px; overflow-y: auto; z-index: 20;
+    grid-template-columns: repeat(7, 1fr); gap: 4px;
+  }
+  #emoji-picker.visible { display: grid; }
+  .emoji-option { font-size: 20px; text-align: center; padding: 4px; border-radius: 6px; cursor: pointer; background: none; border: none; }
+  .emoji-option:hover { background: var(--accent-light); }
+
+  #theme-picker {
+    display: none; position: absolute; top: 44px; right: 12px; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    padding: 14px; z-index: 30; width: 230px; max-height: 80vh; overflow-y: auto;
+  }
+  #theme-picker.visible { display: block; }
+  #theme-picker p { font-size: 12px; color: var(--text-faint); margin-bottom: 8px; margin-top: 14px; }
+  #theme-picker p:first-child { margin-top: 0; }
+  .theme-swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+  .theme-swatch { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
+  .theme-swatch.selected { border-color: var(--text); }
+  .bg-swatch {
+    width: 100%; height: 40px; border-radius: 6px; cursor: pointer; border: 2px solid var(--border);
+    margin-bottom: 6px; display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: var(--text-light);
+  }
+  .bg-swatch.selected { border-color: var(--accent); }
+  #bg-upload-label {
+    display: block; text-align: center; padding: 8px; border: 1px dashed var(--border); border-radius: 6px;
+    font-size: 12px; color: var(--text-light); cursor: pointer; margin-bottom: 6px;
+  }
+  #bg-upload-label:hover { background: var(--accent-light); }
+  #bg-remove-btn {
+    width: 100%; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg);
+    font-size: 12px; color: var(--text-faint); cursor: pointer;
+  }
+
+  #trash-overlay, #draw-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  #trash-overlay.visible, #draw-overlay.visible { display: flex; }
+  #trash-modal, #draw-modal {
+    background: var(--bg); border-radius: 12px; padding: 18px; width: 92%; max-width: 460px;
+    display: flex; flex-direction: column; gap: 10px; max-height: 80vh;
+  }
+  #trash-modal h2 { font-size: 16px; color: var(--text); margin-bottom: 4px; }
+  #trash-list { overflow-y: auto; flex: 1; }
+  .trash-item {
+    display: flex; justify-content: space-between; align-items: center; padding: 8px 4px;
+    border-bottom: 1px solid var(--border); gap: 8px;
+  }
+  .trash-item-title { font-size: 14px; color: var(--text-light); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .trash-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .trash-actions button {
+    font-size: 12px; padding: 5px 8px; border-radius: 5px; border: 1px solid var(--border); background: var(--bg);
+    cursor: pointer; color: var(--text-light);
+  }
+  .trash-actions button.danger { color: #c0392b; }
+  #trash-close-btn {
+    padding: 8px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg);
+    cursor: pointer; font-size: 13px; color: var(--text-light); align-self: flex-end;
+  }
+
+  #draw-canvas {
+    width: 100%; aspect-ratio: 4 / 3; background: #ffffff; border: 1px solid var(--border);
+    border-radius: 8px; touch-action: none; cursor: crosshair;
+  }
+  #draw-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  #draw-controls input[type="color"] { width: 34px; height: 34px; border: none; border-radius: 50%; padding: 0; cursor: pointer; background: none; }
+  #draw-controls input[type="range"] { width: 90px; }
+  .draw-action-btn {
+    padding: 8px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg);
+    cursor: pointer; font-size: 13px; color: var(--text-light);
+  }
+  .draw-action-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+
   @media (max-width: 700px) {
-    #sidebar { width: 200px; }
-    #editor-area { padding: 30px 24px; }
+    body { overflow: hidden; }
+    #sidebar { width: 100%; border-right: none; display: none; }
+    #sidebar.mobile-active { display: flex; }
+    #sidebar-header { display: none; }
+    #mobile-list-header { display: flex; }
+    #new-note-btn { display: none; }
+    .note-item { padding: 12px 10px; }
+    .note-action-btn { opacity: 1; }
+    #main { display: none; }
+    #main.mobile-active { display: flex; }
+    #mobile-editor-header { display: flex; }
+    #editor-area { padding: 16px 18px 30px; }
     #note-title { font-size: 24px; }
+    #note-body { min-height: 40vh; font-size: 16px; }
+    #note-footer-meta { padding: 12px 18px; }
+    #toolbar { position: sticky; bottom: 0; background: var(--bg); padding: 8px 0; margin-bottom: 8px; gap: 0; }
+    .tb-btn { width: 38px; height: 38px; font-size: 15px; }
+    #emoji-picker { left: 0; right: 0; width: auto; margin: 0 8px; }
+    #theme-picker { right: 8px; width: auto; left: 8px; }
   }
 </style>
 </head>
 <body>
 
 <div id="sidebar">
-  <div id="sidebar-header">📝 My Notes</div>
+  <div id="mobile-list-header">
+    <h1>📝 My Notes</h1>
+    <div id="mobile-header-buttons">
+      <button class="round-btn" id="mobile-dark-btn" title="Toggle dark mode">🌙</button>
+      <button class="round-btn" id="mobile-theme-btn" title="Theme &amp; background">🎨</button>
+      <button class="round-btn" id="mobile-new-btn" title="New note">+</button>
+    </div>
+  </div>
+  <div id="sidebar-header">
+    <span>📝 My Notes</span>
+    <div id="sidebar-header-icons">
+      <button class="icon-btn" id="dark-btn" title="Toggle dark mode">🌙</button>
+      <button class="icon-btn" id="theme-btn" title="Theme &amp; background">🎨</button>
+    </div>
+  </div>
+  <div id="search-wrap">
+    <input id="search-input" type="text" placeholder="Search notes...">
+  </div>
   <button id="new-note-btn">+ New note</button>
   <div id="note-list"></div>
+  <div id="sidebar-footer">🗑️ <span id="trash-count-label">Trash</span></div>
+</div>
+
+<div id="theme-picker">
+  <p>Theme color</p>
+  <div class="theme-swatches">
+    <button class="theme-swatch selected" data-accent="#2f7d5e" data-light="#e6f2ec" style="background:#2f7d5e" title="Green"></button>
+    <button class="theme-swatch" data-accent="#2f5d9e" data-light="#e6edf7" style="background:#2f5d9e" title="Blue"></button>
+    <button class="theme-swatch" data-accent="#9e5d2f" data-light="#f7ede6" style="background:#9e5d2f" title="Amber"></button>
+    <button class="theme-swatch" data-accent="#8e3f8f" data-light="#f3e6f4" style="background:#8e3f8f" title="Purple"></button>
+    <button class="theme-swatch" data-accent="#c0392b" data-light="#f9e6e4" style="background:#c0392b" title="Red"></button>
+    <button class="theme-swatch" data-accent="#3f3f3f" data-light="#e8e8e8" style="background:#3f3f3f" title="Graphite"></button>
+  </div>
+  <p>Background</p>
+  <div class="bg-swatch" data-bg="none" style="background: repeating-radial-gradient(var(--border) 1px, transparent 1px); background-size: 10px 10px;">Dots (default)</div>
+  <div class="bg-swatch" data-bg="linear-gradient(135deg,#fdf6e3,#f7e8c9)">Warm paper</div>
+  <div class="bg-swatch" data-bg="linear-gradient(135deg,#e3f0fd,#c9e0f7)">Cool sky</div>
+  <div class="bg-swatch" data-bg="repeating-linear-gradient(45deg,#f5f5f0,#f5f5f0 10px,#eeeee6 10px,#eeeee6 20px)">Soft stripes</div>
+  <label id="bg-upload-label">📷 Upload your own image
+    <input type="file" id="bg-upload-input" accept="image/*" style="display:none;">
+  </label>
+  <button id="bg-remove-btn">Remove custom background</button>
 </div>
 
 <div id="main">
-  <div id="no-note-selected">Select a note, or create a new one to get started.</div>
+  <div id="mobile-editor-header">
+    <button id="back-btn" title="Back to notes">←</button>
+    <span id="mobile-editor-header-label">Notes</span>
+    <button class="mobile-icon-btn" id="mic-btn-mobile" title="Voice to text">🎤</button>
+    <button class="mobile-icon-btn" id="delete-note-btn-mobile" title="Delete this note">🗑️</button>
+  </div>
+  <div id="no-note-selected">
+    <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 3v4a1 1 0 0 0 1 1h4"></path>
+      <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"></path>
+      <path d="M9 13h6"></path>
+      <path d="M9 17h6"></path>
+      <path d="M9 9h1"></path>
+    </svg>
+    <span>Select a note, or create a new one to get started.</span>
+  </div>
   <div id="editor-area" style="display:none;">
     <input id="note-title" type="text" placeholder="Untitled" />
+
+    <div id="tags-row">
+      <input id="tag-input" type="text" placeholder="+ add tag">
+    </div>
 
     <div id="toolbar">
       <button class="tb-btn" id="btn-bold" title="Bold"><b>B</b></button>
@@ -217,8 +390,16 @@
       <div class="tb-sep"></div>
       <button class="tb-btn" id="btn-bullet" title="Bullet list">•≡</button>
       <button class="tb-btn" id="btn-number" title="Numbered list">1.≡</button>
+      <button class="tb-btn" id="btn-checklist" title="Checklist item">☑</button>
       <div class="tb-sep"></div>
       <button class="tb-btn" id="btn-clear" title="Clear formatting">Tx</button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn" id="btn-emoji" title="Insert emoji">😊</button>
+      <button class="tb-btn" id="btn-draw" title="Insert drawing">✏️</button>
+      <button class="tb-btn" id="btn-mic" title="Voice to text">🎤</button>
+      <button class="tb-btn" id="btn-export" title="Export as .txt">⬇️</button>
+      <div class="tb-sep"></div>
+      <button class="tb-btn" id="btn-delete" title="Delete this note">🗑️</button>
       <div class="tb-sep"></div>
       <select id="font-select" title="Font">
         <option value="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">Default</option>
@@ -232,18 +413,162 @@
         <option value="20px">Large</option>
         <option value="26px">Huge</option>
       </select>
+
+      <div id="emoji-picker"></div>
     </div>
 
     <div id="note-body" contenteditable="true" data-placeholder="Start writing..."></div>
   </div>
+  <div id="note-footer-meta" style="display:none;"></div>
 </div>
 
 <div id="save-indicator">Saved</div>
 
+<div id="trash-overlay">
+  <div id="trash-modal">
+    <h2>Recently deleted</h2>
+    <p style="font-size:12px; color:var(--text-faint);">Notes are kept for 7 days, then removed automatically.</p>
+    <div id="trash-list"></div>
+    <button id="trash-close-btn">Close</button>
+  </div>
+</div>
+
+<div id="draw-overlay">
+  <div id="draw-modal">
+    <canvas id="draw-canvas"></canvas>
+    <div id="draw-controls">
+      <input type="color" id="draw-color" value="#1a1a1a" title="Pen color">
+      <input type="range" id="draw-size" min="1" max="20" value="3" title="Pen size">
+      <button class="draw-action-btn" id="draw-clear">Clear</button>
+      <button class="draw-action-btn" id="draw-cancel">Cancel</button>
+      <button class="draw-action-btn primary" id="draw-insert">Insert</button>
+    </div>
+  </div>
+</div>
+
 <script>
   const STORAGE_KEY = "my_notes_app_data";
+  const TRASH_KEY = "my_notes_app_trash";
+  const THEME_KEY = "my_notes_app_theme";
+  const DARK_KEY = "my_notes_app_dark";
+  const BG_KEY = "my_notes_app_bg";
+
   let notes = [];
+  let trash = [];
   let activeId = null;
+  let searchQuery = "";
+
+  const EMOJIS = ["😀","😂","😊","😍","🤔","😎","😴","😭","😡","👍","👎","🙏","👏","💪","🎉","✅","❌","⭐","🔥","💡",
+                  "📌","📅","⏰","❤️","💚","💙","💛","🧠","📝","📚","🎯","🚀","🌟","☕","🍕","🎵","🌧️","☀️","🐱","🐶"];
+
+  function applyTheme(accent, light) {
+    document.documentElement.style.setProperty("--accent", accent);
+    document.documentElement.style.setProperty("--accent-light", light);
+    localStorage.setItem(THEME_KEY, JSON.stringify({ accent, light }));
+    document.querySelectorAll(".theme-swatch").forEach(s => {
+      s.classList.toggle("selected", s.dataset.accent === accent);
+    });
+  }
+
+  function loadTheme() {
+    const raw = localStorage.getItem(THEME_KEY);
+    if (raw) {
+      const { accent, light } = JSON.parse(raw);
+      applyTheme(accent, light);
+    }
+  }
+
+  function toggleThemePicker() {
+    document.getElementById("theme-picker").classList.toggle("visible");
+  }
+
+  function applyDarkMode(isDark) {
+    document.documentElement.classList.toggle("dark", isDark);
+    localStorage.setItem(DARK_KEY, isDark ? "1" : "0");
+    document.getElementById("dark-btn").textContent = isDark ? "☀️" : "🌙";
+    document.getElementById("mobile-dark-btn").textContent = isDark ? "☀️" : "🌙";
+  }
+
+  function loadDarkMode() {
+    applyDarkMode(localStorage.getItem(DARK_KEY) === "1");
+  }
+
+  function toggleDarkMode() {
+    applyDarkMode(!document.documentElement.classList.contains("dark"));
+  }
+
+  function applyBackground(value) {
+    const editor = document.getElementById("editor-area");
+    const noNote = document.getElementById("no-note-selected");
+    if (!value || value === "none") {
+      editor.style.backgroundImage = "";
+      noNote.style.backgroundImage = "";
+      editor.style.backgroundSize = "";
+      noNote.style.backgroundSize = "";
+    } else if (value.startsWith("data:image")) {
+      const overlay = document.documentElement.classList.contains("dark")
+        ? "linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.55))"
+        : "linear-gradient(rgba(255,255,255,0.82),rgba(255,255,255,0.82))";
+      const combined = overlay + ", url(" + value + ")";
+      editor.style.backgroundImage = combined;
+      noNote.style.backgroundImage = combined;
+      editor.style.backgroundSize = "cover";
+      noNote.style.backgroundSize = "cover";
+    } else {
+      editor.style.backgroundImage = value;
+      noNote.style.backgroundImage = value;
+      editor.style.backgroundSize = "";
+      noNote.style.backgroundSize = "";
+    }
+    document.querySelectorAll(".bg-swatch").forEach(s => {
+      s.classList.toggle("selected", s.dataset.bg === value);
+    });
+  }
+
+  function saveBackground(value) {
+    try {
+      localStorage.setItem(BG_KEY, value);
+    } catch (e) {
+      alert("That image is too large to save. Try a smaller photo.");
+    }
+  }
+
+  function loadBackground() {
+    const value = localStorage.getItem(BG_KEY);
+    if (value) applyBackground(value);
+  }
+
+  function resizeImageFile(file, maxWidth, callback) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width);
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        callback(canvas.toDataURL("image/jpeg", 0.75));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function isMobile() { return window.innerWidth <= 700; }
+
+  function showListView() {
+    if (!isMobile()) return;
+    document.getElementById("sidebar").classList.add("mobile-active");
+    document.getElementById("main").classList.remove("mobile-active");
+  }
+
+  function showEditorView() {
+    if (!isMobile()) return;
+    document.getElementById("sidebar").classList.remove("mobile-active");
+    document.getElementById("main").classList.add("mobile-active");
+  }
 
   function loadNotes() {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -255,6 +580,19 @@
     showSaveIndicator();
   }
 
+  function loadTrash() {
+    const raw = localStorage.getItem(TRASH_KEY);
+    trash = raw ? JSON.parse(raw) : [];
+    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    trash = trash.filter(n => n.deletedAt > cutoff);
+    saveTrash();
+  }
+
+  function saveTrash() {
+    localStorage.setItem(TRASH_KEY, JSON.stringify(trash));
+    updateTrashCount();
+  }
+
   function showSaveIndicator() {
     const el = document.getElementById("save-indicator");
     el.classList.add("visible");
@@ -262,29 +600,69 @@
     window._saveTimeout = setTimeout(() => el.classList.remove("visible"), 1200);
   }
 
+  function timeAgo(ts) {
+    const diff = Date.now() - ts;
+    const min = Math.floor(diff / 60000);
+    if (min < 1) return "just now";
+    if (min < 60) return min + "m ago";
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return hr + "h ago";
+    const day = Math.floor(hr / 24);
+    if (day < 7) return day + "d ago";
+    return new Date(ts).toLocaleDateString();
+  }
+
   function createNote() {
-    const note = {
-      id: Date.now().toString(),
-      title: "",
-      body: "",
-      updatedAt: Date.now(),
-    };
+    const note = { id: Date.now().toString(), title: "", body: "", tags: [], pinned: false, updatedAt: Date.now() };
     notes.unshift(note);
     saveNotes();
     renderNoteList();
     selectNote(note.id);
   }
 
+  function deleteNoteById(id) {
+    const note = notes.find(n => n.id === id);
+    if (!note) return;
+    notes = notes.filter(n => n.id !== id);
+    note.deletedAt = Date.now();
+    trash.unshift(note);
+    saveNotes();
+    saveTrash();
+  }
+
   function deleteNote(id, event) {
     event.stopPropagation();
-    if (!confirm("Delete this note?")) return;
-    notes = notes.filter(n => n.id !== id);
-    saveNotes();
+    if (!confirm("Move this note to Trash?")) return;
+    deleteNoteById(id);
     if (activeId === id) {
       activeId = null;
-      document.getElementById("editor-area").style.display = "none";
-      document.getElementById("no-note-selected").style.display = "flex";
+      closeEditorToList();
     }
+    renderNoteList();
+  }
+
+  function deleteActiveNote() {
+    if (!activeId) return;
+    if (!confirm("Move this note to Trash?")) return;
+    deleteNoteById(activeId);
+    activeId = null;
+    closeEditorToList();
+    renderNoteList();
+  }
+
+  function closeEditorToList() {
+    document.getElementById("editor-area").style.display = "none";
+    document.getElementById("note-footer-meta").style.display = "none";
+    document.getElementById("no-note-selected").style.display = "flex";
+    showListView();
+  }
+
+  function togglePin(id, event) {
+    event.stopPropagation();
+    const note = notes.find(n => n.id === id);
+    if (!note) return;
+    note.pinned = !note.pinned;
+    saveNotes();
     renderNoteList();
   }
 
@@ -294,13 +672,21 @@
     if (!note) return;
     document.getElementById("no-note-selected").style.display = "none";
     document.getElementById("editor-area").style.display = "block";
+    document.getElementById("note-footer-meta").style.display = "block";
     document.getElementById("note-title").value = note.title;
     document.getElementById("note-body").innerHTML = note.body || "";
     document.getElementById("note-body").style.fontFamily = note.fontFamily || "";
     document.getElementById("note-body").style.fontSize = note.fontSize || "16px";
     document.getElementById("font-select").value = note.fontFamily || document.getElementById("font-select").options[0].value;
     document.getElementById("size-select").value = note.fontSize || "16px";
+    renderTags(note);
+    updateFooterMeta(note);
     renderNoteList();
+    showEditorView();
+  }
+
+  function updateFooterMeta(note) {
+    document.getElementById("note-footer-meta").textContent = "Last edited " + timeAgo(note.updatedAt);
   }
 
   function updateActiveNote() {
@@ -314,6 +700,7 @@
     note.updatedAt = Date.now();
     saveNotes();
     renderNoteList();
+    updateFooterMeta(note);
   }
 
   function applyFormat(command) {
@@ -322,47 +709,358 @@
     updateActiveNote();
   }
 
+  function insertChecklistItem() {
+    document.getElementById("note-body").focus();
+    document.execCommand("insertHTML", false,
+      '<div class="checklist-item"><input type="checkbox" onclick="toggleChecklist(this)"><span>New item</span></div><br>');
+    updateActiveNote();
+  }
+
+  window.toggleChecklist = function(checkbox) {
+    const item = checkbox.closest(".checklist-item");
+    item.classList.toggle("checked", checkbox.checked);
+    if (checkbox.checked) checkbox.setAttribute("checked", "checked");
+    else checkbox.removeAttribute("checked");
+    updateActiveNote();
+  };
+
+  function renderTags(note) {
+    const row = document.getElementById("tags-row");
+    row.querySelectorAll(".tag-chip").forEach(c => c.remove());
+    (note.tags || []).forEach(tag => {
+      const chip = document.createElement("span");
+      chip.className = "tag-chip";
+      const label = document.createElement("span");
+      label.textContent = tag;
+      const removeBtn = document.createElement("button");
+      removeBtn.textContent = "✕";
+      removeBtn.onclick = () => {
+        note.tags = note.tags.filter(t => t !== tag);
+        saveNotes();
+        renderTags(note);
+      };
+      chip.appendChild(label);
+      chip.appendChild(removeBtn);
+      row.insertBefore(chip, document.getElementById("tag-input"));
+    });
+  }
+
+  function addTagFromInput() {
+    const input = document.getElementById("tag-input");
+    const value = input.value.trim();
+    if (!value || !activeId) return;
+    const note = notes.find(n => n.id === activeId);
+    if (!note) return;
+    note.tags = note.tags || [];
+    if (!note.tags.includes(value)) note.tags.push(value);
+    saveNotes();
+    renderTags(note);
+    input.value = "";
+  }
+
+  function matchesSearch(note) {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    const plainBody = (note.body || "").replace(/<[^>]+>/g, " ").toLowerCase();
+    const tagsText = (note.tags || []).join(" ").toLowerCase();
+    return (note.title || "").toLowerCase().includes(q) || plainBody.includes(q) || tagsText.includes(q);
+  }
+
   function renderNoteList() {
     const list = document.getElementById("note-list");
     list.innerHTML = "";
 
-    if (notes.length === 0) {
-      list.innerHTML = '<div id="empty-state">No notes yet</div>';
+    const filtered = notes.filter(matchesSearch);
+
+    if (filtered.length === 0) {
+      list.innerHTML = '<div id="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg><span>' + (notes.length === 0 ? "No notes yet" : "No matching notes") + '</span></div>';
       return;
     }
 
-    const sorted = [...notes].sort((a, b) => b.updatedAt - a.updatedAt);
+    const pinned = filtered.filter(n => n.pinned).sort((a, b) => b.updatedAt - a.updatedAt);
+    const others = filtered.filter(n => !n.pinned).sort((a, b) => b.updatedAt - a.updatedAt);
 
-    for (const note of sorted) {
-      const item = document.createElement("div");
-      item.className = "note-item" + (note.id === activeId ? " active" : "");
-      item.onclick = () => selectNote(note.id);
+    function renderGroup(group, label) {
+      if (group.length === 0) return;
+      if (label) {
+        const lbl = document.createElement("div");
+        lbl.className = "list-section-label";
+        lbl.textContent = label;
+        list.appendChild(lbl);
+      }
+      for (const note of group) {
+        const item = document.createElement("div");
+        item.className = "note-item" + (note.id === activeId ? " active" : "");
+        item.onclick = () => selectNote(note.id);
 
-      const preview = document.createElement("span");
-      preview.className = "note-title-preview";
-      preview.textContent = note.title || "Untitled";
+        const main = document.createElement("div");
+        main.className = "note-item-main";
+        const preview = document.createElement("div");
+        preview.className = "note-title-preview";
+        preview.textContent = note.title || "Untitled";
+        const meta = document.createElement("div");
+        meta.className = "note-meta";
+        meta.textContent = timeAgo(note.updatedAt);
+        main.appendChild(preview);
+        main.appendChild(meta);
 
-      const del = document.createElement("span");
-      del.className = "delete-btn";
-      del.textContent = "✕";
-      del.onclick = (e) => deleteNote(note.id, e);
+        const actions = document.createElement("div");
+        actions.className = "note-item-actions";
+        const pinBtn = document.createElement("button");
+        pinBtn.className = "note-action-btn" + (note.pinned ? " pinned" : "");
+        pinBtn.textContent = "📌";
+        pinBtn.title = note.pinned ? "Unpin" : "Pin";
+        pinBtn.onclick = (e) => togglePin(note.id, e);
+        const delBtn = document.createElement("button");
+        delBtn.className = "note-action-btn";
+        delBtn.textContent = "✕";
+        delBtn.title = "Delete";
+        delBtn.onclick = (e) => deleteNote(note.id, e);
+        actions.appendChild(pinBtn);
+        actions.appendChild(delBtn);
 
-      item.appendChild(preview);
-      item.appendChild(del);
-      list.appendChild(item);
+        item.appendChild(main);
+        item.appendChild(actions);
+        list.appendChild(item);
+      }
+    }
+
+    renderGroup(pinned, pinned.length ? "Pinned" : null);
+    renderGroup(others, pinned.length ? "Notes" : null);
+  }
+
+  function updateTrashCount() {
+    document.getElementById("trash-count-label").textContent = "Trash (" + trash.length + ")";
+  }
+
+  function renderTrash() {
+    const list = document.getElementById("trash-list");
+    list.innerHTML = "";
+    if (trash.length === 0) {
+      list.innerHTML = '<p style="font-size:13px; color:var(--text-faint); padding:10px 0;">Trash is empty.</p>';
+      return;
+    }
+    trash.forEach(note => {
+      const row = document.createElement("div");
+      row.className = "trash-item";
+      const title = document.createElement("span");
+      title.className = "trash-item-title";
+      title.textContent = note.title || "Untitled";
+      const actions = document.createElement("div");
+      actions.className = "trash-actions";
+      const restoreBtn = document.createElement("button");
+      restoreBtn.textContent = "Restore";
+      restoreBtn.onclick = () => {
+        trash = trash.filter(n => n.id !== note.id);
+        delete note.deletedAt;
+        notes.unshift(note);
+        saveNotes();
+        saveTrash();
+        renderTrash();
+        renderNoteList();
+      };
+      const deleteForeverBtn = document.createElement("button");
+      deleteForeverBtn.className = "danger";
+      deleteForeverBtn.textContent = "Delete forever";
+      deleteForeverBtn.onclick = () => {
+        if (!confirm("Permanently delete this note? This can't be undone.")) return;
+        trash = trash.filter(n => n.id !== note.id);
+        saveTrash();
+        renderTrash();
+      };
+      actions.appendChild(restoreBtn);
+      actions.appendChild(deleteForeverBtn);
+      row.appendChild(title);
+      row.appendChild(actions);
+      list.appendChild(row);
+    });
+  }
+
+  function openTrash() {
+    renderTrash();
+    document.getElementById("trash-overlay").classList.add("visible");
+  }
+
+  function closeTrash() {
+    document.getElementById("trash-overlay").classList.remove("visible");
+  }
+
+  function buildEmojiPicker() {
+    const picker = document.getElementById("emoji-picker");
+    picker.innerHTML = "";
+    EMOJIS.forEach(emoji => {
+      const btn = document.createElement("button");
+      btn.className = "emoji-option";
+      btn.textContent = emoji;
+      btn.onclick = () => {
+        document.getElementById("note-body").focus();
+        document.execCommand("insertText", false, emoji);
+        updateActiveNote();
+        picker.classList.remove("visible");
+      };
+      picker.appendChild(btn);
+    });
+  }
+
+  function toggleEmojiPicker() {
+    document.getElementById("emoji-picker").classList.toggle("visible");
+  }
+
+  function exportActiveNote() {
+    if (!activeId) return;
+    const note = notes.find(n => n.id === activeId);
+    if (!note) return;
+    const plainBody = (note.body || "").replace(/<div/g, "\n<div").replace(/<[^>]+>/g, "").replace(/\n{2,}/g, "\n");
+    const text = (note.title || "Untitled") + "\n\n" + plainBody.trim();
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = (note.title || "note").replace(/[^a-z0-9]/gi, "_").toLowerCase() + ".txt";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  let recognition = null;
+  let recognizing = false;
+
+  function setupSpeechRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return null;
+    const rec = new SpeechRecognition();
+    rec.continuous = true;
+    rec.interimResults = false;
+    rec.lang = "en-US";
+    rec.onresult = (event) => {
+      let transcript = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      document.getElementById("note-body").focus();
+      document.execCommand("insertText", false, transcript + " ");
+      updateActiveNote();
+    };
+    rec.onend = () => {
+      recognizing = false;
+      document.getElementById("btn-mic").classList.remove("recording");
+      document.getElementById("mic-btn-mobile").classList.remove("recording");
+    };
+    return rec;
+  }
+
+  function toggleVoiceInput() {
+    if (!activeId) return;
+    if (!recognition) {
+      recognition = setupSpeechRecognition();
+      if (!recognition) {
+        alert("Voice-to-text isn't supported in this browser. Try Chrome on desktop or Android.");
+        return;
+      }
+    }
+    if (recognizing) {
+      recognition.stop();
+      recognizing = false;
+      document.getElementById("btn-mic").classList.remove("recording");
+      document.getElementById("mic-btn-mobile").classList.remove("recording");
+    } else {
+      recognition.start();
+      recognizing = true;
+      document.getElementById("btn-mic").classList.add("recording");
+      document.getElementById("mic-btn-mobile").classList.add("recording");
     }
   }
 
+  let drawCtx, drawing = false, lastX = 0, lastY = 0;
+
+  function openDrawModal() {
+    document.getElementById("draw-overlay").classList.add("visible");
+    const canvas = document.getElementById("draw-canvas");
+    canvas.width = canvas.clientWidth * 2;
+    canvas.height = canvas.clientHeight * 2;
+    drawCtx = canvas.getContext("2d");
+    drawCtx.scale(2, 2);
+    drawCtx.fillStyle = "#ffffff";
+    drawCtx.fillRect(0, 0, canvas.width, canvas.height);
+    drawCtx.lineCap = "round";
+    drawCtx.lineJoin = "round";
+  }
+
+  function closeDrawModal() {
+    document.getElementById("draw-overlay").classList.remove("visible");
+  }
+
+  function getPos(e, canvas) {
+    const rect = canvas.getBoundingClientRect();
+    const point = e.touches ? e.touches[0] : e;
+    return { x: point.clientX - rect.left, y: point.clientY - rect.top };
+  }
+
+  function startDraw(e) {
+    e.preventDefault();
+    drawing = true;
+    const canvas = document.getElementById("draw-canvas");
+    const pos = getPos(e, canvas);
+    lastX = pos.x; lastY = pos.y;
+  }
+
+  function moveDraw(e) {
+    if (!drawing) return;
+    e.preventDefault();
+    const canvas = document.getElementById("draw-canvas");
+    const pos = getPos(e, canvas);
+    drawCtx.strokeStyle = document.getElementById("draw-color").value;
+    drawCtx.lineWidth = document.getElementById("draw-size").value;
+    drawCtx.beginPath();
+    drawCtx.moveTo(lastX, lastY);
+    drawCtx.lineTo(pos.x, pos.y);
+    drawCtx.stroke();
+    lastX = pos.x; lastY = pos.y;
+  }
+
+  function endDraw() { drawing = false; }
+
+  function clearDraw() {
+    const canvas = document.getElementById("draw-canvas");
+    drawCtx.fillStyle = "#ffffff";
+    drawCtx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function insertDrawing() {
+    const canvas = document.getElementById("draw-canvas");
+    const dataUrl = canvas.toDataURL("image/png");
+    document.getElementById("note-body").focus();
+    document.execCommand("insertHTML", false, '<img src="' + dataUrl + '" alt="drawing">');
+    updateActiveNote();
+    closeDrawModal();
+  }
+
   document.getElementById("new-note-btn").addEventListener("click", createNote);
+  document.getElementById("mobile-new-btn").addEventListener("click", createNote);
+  document.getElementById("back-btn").addEventListener("click", () => {
+    activeId = null;
+    showListView();
+    renderNoteList();
+  });
   document.getElementById("note-title").addEventListener("input", updateActiveNote);
   document.getElementById("note-body").addEventListener("input", updateActiveNote);
+  document.getElementById("tag-input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); addTagFromInput(); }
+  });
 
   document.getElementById("btn-bold").addEventListener("click", () => applyFormat("bold"));
   document.getElementById("btn-italic").addEventListener("click", () => applyFormat("italic"));
   document.getElementById("btn-underline").addEventListener("click", () => applyFormat("underline"));
   document.getElementById("btn-bullet").addEventListener("click", () => applyFormat("insertUnorderedList"));
   document.getElementById("btn-number").addEventListener("click", () => applyFormat("insertOrderedList"));
+  document.getElementById("btn-checklist").addEventListener("click", insertChecklistItem);
   document.getElementById("btn-clear").addEventListener("click", () => applyFormat("removeFormat"));
+  document.getElementById("btn-emoji").addEventListener("click", toggleEmojiPicker);
+  document.getElementById("btn-draw").addEventListener("click", openDrawModal);
+  document.getElementById("btn-mic").addEventListener("click", toggleVoiceInput);
+  document.getElementById("mic-btn-mobile").addEventListener("click", toggleVoiceInput);
+  document.getElementById("btn-export").addEventListener("click", exportActiveNote);
+  document.getElementById("btn-delete").addEventListener("click", deleteActiveNote);
+  document.getElementById("delete-note-btn-mobile").addEventListener("click", deleteActiveNote);
 
   document.getElementById("font-select").addEventListener("change", (e) => {
     document.getElementById("note-body").style.fontFamily = e.target.value;
@@ -373,9 +1071,91 @@
     updateActiveNote();
   });
 
+  document.getElementById("search-input").addEventListener("input", (e) => {
+    searchQuery = e.target.value;
+    renderNoteList();
+  });
+
+  document.getElementById("dark-btn").addEventListener("click", toggleDarkMode);
+  document.getElementById("mobile-dark-btn").addEventListener("click", toggleDarkMode);
+  document.getElementById("theme-btn").addEventListener("click", toggleThemePicker);
+  document.getElementById("mobile-theme-btn").addEventListener("click", toggleThemePicker);
+
+  document.querySelectorAll(".theme-swatch").forEach(swatch => {
+    swatch.addEventListener("click", () => {
+      applyTheme(swatch.dataset.accent, swatch.dataset.light);
+    });
+  });
+  document.querySelectorAll(".bg-swatch").forEach(swatch => {
+    swatch.addEventListener("click", () => {
+      applyBackground(swatch.dataset.bg);
+      saveBackground(swatch.dataset.bg);
+    });
+  });
+  document.getElementById("bg-upload-input").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    resizeImageFile(file, 1200, (dataUrl) => {
+      applyBackground(dataUrl);
+      saveBackground(dataUrl);
+    });
+  });
+  document.getElementById("bg-remove-btn").addEventListener("click", () => {
+    applyBackground("none");
+    saveBackground("none");
+  });
+
+  document.getElementById("sidebar-footer").addEventListener("click", openTrash);
+  document.getElementById("trash-close-btn").addEventListener("click", closeTrash);
+
+  document.addEventListener("click", (e) => {
+    const picker = document.getElementById("emoji-picker");
+    const emojiBtn = document.getElementById("btn-emoji");
+    if (picker.classList.contains("visible") && !picker.contains(e.target) && e.target !== emojiBtn) {
+      picker.classList.remove("visible");
+    }
+    const themePicker = document.getElementById("theme-picker");
+    const themeBtn = document.getElementById("theme-btn");
+    const mobileThemeBtn = document.getElementById("mobile-theme-btn");
+    if (themePicker.classList.contains("visible") && !themePicker.contains(e.target)
+        && e.target !== themeBtn && e.target !== mobileThemeBtn) {
+      themePicker.classList.remove("visible");
+    }
+  });
+
+  const drawCanvas = document.getElementById("draw-canvas");
+  drawCanvas.addEventListener("mousedown", startDraw);
+  drawCanvas.addEventListener("mousemove", moveDraw);
+  drawCanvas.addEventListener("mouseup", endDraw);
+  drawCanvas.addEventListener("mouseleave", endDraw);
+  drawCanvas.addEventListener("touchstart", startDraw);
+  drawCanvas.addEventListener("touchmove", moveDraw);
+  drawCanvas.addEventListener("touchend", endDraw);
+
+  document.getElementById("draw-clear").addEventListener("click", clearDraw);
+  document.getElementById("draw-cancel").addEventListener("click", closeDrawModal);
+  document.getElementById("draw-insert").addEventListener("click", insertDrawing);
+
+  window.addEventListener("resize", () => {
+    if (!isMobile()) {
+      document.getElementById("sidebar").classList.remove("mobile-active");
+      document.getElementById("main").classList.remove("mobile-active");
+    } else if (activeId) {
+      showEditorView();
+    } else {
+      showListView();
+    }
+  });
+
+  buildEmojiPicker();
+  loadTheme();
+  loadDarkMode();
+  loadBackground();
   loadNotes();
+  loadTrash();
   renderNoteList();
+  showListView();
 </script>
- 
+
 </body>
 </html>
